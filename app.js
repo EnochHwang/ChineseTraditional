@@ -3,104 +3,170 @@
 // 506讚美詩
 // Copyright 2026 Enoch Hwang
 
-const APP_NAME = "Chinese_Traditional";
+const APP_NAME = "506讚美詩";
 var currentListPages = NUMERIC_PAGES; // initial list
-
-
-//////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////
-// Initialize Swiper
-var swiper = new Swiper(".swiper", {
-    zoom: {
-        maxRatio: 5,
-        minRatio: 1,
-        toggle: false // DISABLE Double-Tap Zoom (Crucial for Long Press)
-    },
-    grabCursor: true,
-    speed: 500,
-    virtual: {
-      renderSlide: function (title, index) {
-        /*  <div> format
-        <div class="swiper-slide">
-          <div class="swiper-zoom-container">
-            <img src="songsheets/1 Praise to the Lord.png">
-          </div>
-        </div>
-        */
-        const swiper_slide = document.createElement('div');
-        swiper_slide.className = 'swiper-slide';
-        const swiper_zoom = document.createElement('div');
-        swiper_zoom.className = 'swiper-zoom-container';
-        const img = document.createElement('img');
-        img.src = `songsheets/${title}.png`;
-        img.alt = title;
-        img.dataset.title = title;  // IMPORTANT: Store the title here so the Wrapper can find it later
-        swiper_zoom.appendChild(img);
-        swiper_slide.appendChild(swiper_zoom);
-        return swiper_slide;
-    }
-  }
-});
-
-swiper.virtual.slides = currentListPages;  // populate swiper with the currentListPages
-if (swiper.virtual.cache) swiper.virtual.cache = {};  // Clear the Virtual Cache
-swiper.virtual.update();  // Update the Virtual Engine
-swiper.update();          // Update the Swiper Layout
+let currentBookmarkFolder = "Folder 1";
 
 
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
 // Start of program. Execute this when program loads
 window.addEventListener('load', async () => {
-  console.log("Loading app");
   const savedList = localStorage.getItem(APP_NAME+"_currentListPages");
   const savedIndex = localStorage.getItem(APP_NAME+"_swiperindex");
 
-  if (!savedList || !savedIndex) {
-      // --- FIRST TIME RUN ---
-      console.log("First time run! Defaulting to index 0.");
-      //swiper.slideTo(0, 0);
-      localStorage.setItem(APP_NAME+"_swiperindex", 0);
-      localStorage.setItem(APP_NAME+"_currentListPages", JSON.stringify(currentListPages));        
+//  if (!savedList || !savedIndex) {
+  if (true) {
+    // --- FIRST TIME RUN ---
+    console.log("First time run! Defaulting to index 0.");
+    syncSwiper();
+    swiper.slideTo(0, 0);
+    //localStorage.setItem(APP_NAME+"_swiperindex", 0);
+    //localStorage.setItem(APP_NAME+"_currentListPages", JSON.stringify(currentListPages));        
   } else {
-      // --- SUBSEQUENT RUNS (Restore State) ---
-      console.log("Restoring previous state...");
-      currentListPages = JSON.parse(savedList);
-      
-      // Re-populate Swiper with the last known list
-      swiper.virtual.removeAllSlides();
-      swiper.virtual.slides = currentListPages;
-      if (swiper.virtual.cache) swiper.virtual.cache = {}; 
-      swiper.virtual.update();
-      swiper.update();
-      
-      // Jump to the specific song
-      swiper.slideTo(parseInt(savedIndex), 0);
+    // --- SUBSEQUENT RUNS (Restore State) ---
+    console.log("Restoring previous state...");
+    currentListPages = JSON.parse(savedList);
+
+    syncSwiper();
+    
+    // Jump to the specific song
+    swiper.slideTo(parseInt(savedIndex), 0);
   }
+  
+  // Request wake lock to prevent screen timeout
+  requestWakeLock();
+
+  // Show update alert if there's an update
+  if (updateAlert) {
+    showToast("New updates available");
+    updateAlert = false;
+  }
+  
 });
 
-/*
-// May be this is overkill
-// Save state whenever the slide changes (More reliable than visibilitychange)
-swiper.on('slideChange', () => {
-    localStorage.setItem('swiperindex', swiper.activeIndex);
-    localStorage.setItem('currentListPages', JSON.stringify(currentListPages));
-});
-*/
-
-// This is triggered when the app is moved to the background or brought back to the front
+// This is called when the app is moved to the foreground or background
 document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState === "visible") {
-    // Re-request wake lock if it was active
+    // Request wake lock to prevent screen timeout
     if (wakeLock !== null) {
       await requestWakeLock();
     }
+    
+    // Show update alert if there's an update
+    if (updateAlert) {
+      showToast("New updates available");
+      updateAlert = false;
+    }
   } else {
     // Final safety save state when app goes to background
-    localStorage.setItem(APP_NAME+"_swiperindex", swiper.activeIndex);
-    localStorage.setItem(APP_NAME+"_currentListPages", JSON.stringify(currentListPages));
+    //localStorage.setItem(APP_NAME+"_swiperindex", swiper.activeIndex);
+    //localStorage.setItem(APP_NAME+"_currentListPages", JSON.stringify(currentListPages));
   }
 });
+
+// when back online re-fetch all the broken img links
+window.addEventListener('online', () => {
+  //console.log("%c" + "Online", "color: green;");
+  //showToast("Online");
+  
+  // load all broken images in the swiper
+  document.querySelectorAll('.swiper-zoom-container img').forEach(img => {
+    // If the image is broken (naturalWidth is 0)
+    if (img.naturalWidth === 0) {
+      const title = img.dataset.title;
+      console.log(`online event:Refetching: ${title}`);
+      // The '?refetch=' + Date.now() part clears the browser's memory and do a refetch
+      img.src = `songsheets/${title}.png?refetch=` + Date.now();
+    }
+  });
+});
+
+window.addEventListener('offline', () => {
+  //console.log("%c" + "Offline", "color: red;");
+  //showToast("Offline");
+});
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+// Initialize Swiper
+let swiper = new Swiper(".swiper", {
+    zoom: {
+        maxRatio: 5,
+        minRatio: 1,
+        toggle: false // disable Double-Tap Zoom (Crucial for Long Press)
+    },
+    grabCursor: true,
+    speed: 500,
+    virtual: {
+      renderSlide: function (title, index) {
+        //<div> format
+        //<div class="swiper-slide">
+        //  <div class="swiper-zoom-container">
+        //    <img src="songsheets/1 Praise to the Lord.png">
+        //  </div>
+        //</div>
+
+        const swiper_slide = document.createElement('div');
+        swiper_slide.className = 'swiper-slide';
+        const swiper_zoom = document.createElement('div');
+        swiper_zoom.className = 'swiper-zoom-container';
+        const img = document.createElement('img');
+
+        // check for MySongs in local storage first
+        const mySongs = JSON.parse(localStorage.getItem(APP_NAME+"_MySongs") || '{}');
+        if (mySongs[title]) {
+          // It's a My Song! Use the Base64 data from local storage
+          img.src = mySongs[title];
+          
+        } else {  // it's a regular song in songsheet. Fetch it from cache or network
+          img.src = `songsheets/${title}.png`;
+        }
+        
+        img.alt = title;
+        img.dataset.title = title;  // Store the title here so the Wrapper can find it later
+        swiper_zoom.appendChild(img);
+        swiper_slide.appendChild(swiper_zoom);
+        return swiper_slide;
+    }
+  },
+  
+    // this on block is to re-fetch the broken img links when back online
+    on: {
+      // Trigger as soon as the swipe starts
+      slideChange: function() {
+        // We use a tiny timeout to ensure the DOM has updated the 'active' class
+        setTimeout(() => {
+          const activeSlide = this.el.querySelector('.swiper-slide-active');
+          if (activeSlide) {
+            const img = activeSlide.querySelector('img');
+            // check if it's a broken songsheet. It's broken if img.naturalWidth === 0
+            if (img && img.src.includes('songsheets/') && img.naturalWidth === 0) {
+              const title = img.dataset.title;
+///////// TODO always coming here when selecting a song from 123 index or ABC index              
+              console.log(`swiper:Refetching: ${title}`);
+              // The '?refetch=' + Date.now() part clears the browser's memory and do a refetch
+              img.src = `songsheets/${title}.png?refetch=` + Date.now();
+
+            }
+          }
+        }, 50); // 50ms is unnoticeable but enough for Swiper to sync
+      }
+        
+    } // end on  
+  
+});
+
+
+// load and update the swiper
+function syncSwiper() {
+  swiper.virtual.removeAllSlides();
+  swiper.virtual.slides = currentListPages;  // populate swiper with the currentListPages
+  if (swiper.virtual.cache) swiper.virtual.cache = {};  // Clear the Virtual Cache
+  swiper.virtual.update();  // Update the Virtual Engine
+  swiper.update();          // Update the Swiper Layout
+}
 
 
 // After adding the slides, you MUST do a swiper update
@@ -157,8 +223,6 @@ function onMenuPress(id) {
       let currentFullTitle = currentListPages[swiper.activeIndex];
       if (currentFullTitle) {
         // extract number at the end for multi-page
-        // \d+ matches one or more digits
-        // $ ensures they are at the very end of the string
         let baseSongName = currentFullTitle.replace(/\d+$/, '');
 
         // Find the index of the very first page for this song in the current list
@@ -166,7 +230,7 @@ function onMenuPress(id) {
 
         // If we found it and we aren't already there, slide to it
         if (firstPageIndex !== -1 && firstPageIndex !== swiper.activeIndex) {
-            swiper.slideTo(firstPageIndex, 0);
+          swiper.slideTo(firstPageIndex, 0);
         }
       }
       break;
@@ -269,9 +333,9 @@ function onMenuPress(id) {
     
     case 'more': { // setup
       if (moreMenuOverlay.style.display === 'block') {
-          moreMenuOverlay.style.display = 'none';
+        moreMenuOverlay.style.display = 'none';
       } else {
-          moreMenuOverlay.style.display = 'block';
+        moreMenuOverlay.style.display = 'block';
       }
       break;      
     }
@@ -287,24 +351,19 @@ function onMenuPress(id) {
 var moreMenuOverlay = document.getElementById('moreMenuOverlay');
 
 function handleMoreAction(action) {
-  numericList.style.display = 'none';
-  numericListSidebar.style.display = 'none';
-  alphabeticList.style.display = 'none';
-  alphabeticListSidebar.style.display = 'none';
-  strokeList.style.display = 'none';
-  strokeListSidebar.style.display = 'none';
-  bookmarkListContainer.style.display = 'none';
   moreMenuOverlay.style.display = 'none';
     
   switch(action) {
     case 'import':
-      showToast("即將推出導入歌曲功能");  // Import songs coming soon
+      openImportMySongs();
       break;
+      
     case 'share':
       if (navigator.share) {
         navigator.share({ title: '506讚美詩', url: window.location.href });  // 506 Chinese Traditional SDA Hymnal
       }
       break;
+      
     case 'updates':
       if (newWorker) {
         newWorker.postMessage({ action: 'update' });  // send message to service worker
@@ -317,13 +376,27 @@ function handleMoreAction(action) {
       showToast("應用程式已更新");   // App updated
       closeMoreMenu();
       break;
+      
     case 'moreapps':
-      window.open('https://hwang.lasierra.edu/~enoch/Apps', '_blank');
+      window.open('https://enochhwang.github.io/', '_blank');
       break;
+      
     case 'settings':
       showToast("設定功能即將推出");  // Settings coming soon
       break;
+      
+    case 'donate':
+      window.open('https://www.paypal.com/ncp/payment/6HFPWVH9WMU8L', '_blank');
+      break;
+            
     case 'help':
+      numericList.style.display = 'none';
+      numericListSidebar.style.display = 'none';
+      alphabeticList.style.display = 'none';
+      alphabeticListSidebar.style.display = 'none';  
+      strokeList.style.display = 'none';
+      strokeListSidebar.style.display = 'none';  
+      bookmarkListContainer.style.display = 'none';
       swiper.virtual.removeAllSlides();
       swiper.virtual.slides = NUMERIC_PAGES;  // populate swiper with NUMERIC_PAGES (default)  
       currentListPages = NUMERIC_PAGES;
@@ -401,19 +474,122 @@ function displaySong(songname, pageIndex) {
   }
   
   if (pageIndex !== -1) { // found the song
-    // Update Swiper state
-    swiper.virtual.removeAllSlides();
-    swiper.virtual.slides = currentListPages;
-    if (swiper.virtual.cache) swiper.virtual.cache = {};  // Clear the Virtual Cache
-    swiper.virtual.update();  // Update the Virtual Engine
-    swiper.update();          // Update the Swiper Layout
-    
-    // Slide to the page
+    syncSwiper();
     swiper.slideTo(pageIndex, 0);
   } else {
     console.error("Could not find page for: ", songname);
   }
 }
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+///// Update the global variable currentListPages with all the pages for the songs in folderItems
+// return the swiper index for the given song
+/*
+// original
+  // --- Create the swiper pages for the bookmark folder items
+  const folderListPages = [];
+  let pageIndex = -1;
+  folderItems.forEach((item, index) => {
+    // Extract number at the beginning for Numeric List "468 A Child of the King"
+    const match = item.match(/^(\d+)/);
+    
+    if (match) {
+      const songNumber = match[1];
+      const targetPrefix = songNumber + 'h';  // append "h" for filename
+      
+      // Search NUMERIC_PAGES for multi pages belonging to this song
+      // This regex matches "262h", "262h2", "262h3", etc.
+      const regex = new RegExp('^' + targetPrefix + '\\d*$');
+      let songPages = NUMERIC_PAGES.filter(p => regex.test(p));
+      
+      // remove duplicates e.g. His Eye Is On the Sparrow occurs twice in the NUMERIC_PAGES list
+      songPages = [...new Set(songPages)];
+
+      // set the actual pageIndex of the selected page in folderListPages
+      // this is needed if a song occurs more than once in the bookmark list
+      // and the second occurence of the song is selected
+      if (index == songindex) {
+        pageIndex = folderListPages.length;
+      }
+      
+      // Add all the multi pages for the song to our new swiper list
+      folderListPages.push(...songPages);
+      
+    } else {
+      console.warn("handleBookmarkSelect:Regex match failed for bookmark item:", item);
+      folderListPages.push(item);
+    }
+  });
+  
+  // --- Display the selected song
+  currentListPages = folderListPages;
+  displaySong(songname, pageIndex);
+*/
+
+function updateCurrentListPages(songindex, folderItems) {
+  const folderListPages = [];
+  let pageIndex = -1;
+  let songPages;
+
+  folderItems.forEach((item, index) => {
+    // Extract number at the beginning for Numeric List "468 A Child of the King"
+    // /^(\d+)\s|\s(\d+)$/ to extract the song number either at the beginning or the end
+    const match = item.match(/^(\d+)\s/);
+
+    if (match) {
+      const songNumber = match[1];
+      const targetPrefix = songNumber + 'h';  // append "h" for filename
+      
+      // Search NUMERIC_PAGES for multi pages belonging to this song
+      // This regex matches "262h", "262h2", "262h3", etc.
+      const regex = new RegExp('^' + targetPrefix + '\\d*$');
+      songPages = NUMERIC_PAGES.filter(p => regex.test(p));
+      
+      // remove duplicates e.g. His Eye Is On the Sparrow occurs twice in the NUMERIC_PAGES list
+      songPages = [...new Set(songPages)];
+      
+    } else {  // It's a My Song
+      if (currentBookmarkFolder === "Folder 4") {
+        songPages = [item];
+        
+      } else {  // otherwise it might be a multipage song so need to add all the pages for the song
+        const mySongs = JSON.parse(localStorage.getItem(APP_NAME + "_MySongs") || '{}');
+        const mySongKeys = Object.keys(mySongs);  // get a list of all the song names from My Songs
+
+        // get all the pages for the song. Search for matches like "SongName", "SongName 1", "SongName 2"
+        songPages = mySongKeys.filter(key => 
+          key === item || (key.startsWith(item) && key.slice(item.length).match(/^\s*\d*$/))
+        );
+
+        // sort numerically (so "Song 10" comes after "Song 2")
+        songPages.sort((a, b) => {
+          const numA = parseInt(a.slice(item.length)) || 0;
+          const numB = parseInt(b.slice(item.length)) || 0;
+          return numA - numB;
+        });
+      }
+    }
+    
+    // Calculate the index for the swiper to jump to if needed
+    // set the actual pageIndex of the selected page in folderListPages
+    // this is needed if a song occurs more than once in the bookmark list
+    // and the second occurence of the song is selected
+    if (index == songindex) {
+      pageIndex = folderListPages.length;
+    }
+
+    // Add all the multi pages for the song to our new swiper list
+    folderListPages.push(...songPages);
+    
+  });
+
+  // Update the global currentListPages
+  currentListPages = folderListPages;
+
+  return pageIndex;
+} // end updateCurrentListPages
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -705,7 +881,7 @@ swiperWrapper.addEventListener('pointerdown', (e) => {
   startY = e.clientY;
   
   longPressTimer = setTimeout(() => {
-    // --- LONG PRESS ADD BOOKMARK LOGIC ---
+    // --- LONG PRESS SONG SHEET ---
     const index = swiper.activeIndex; // get the current active index
     const page = swiper.virtual.slides[index]; // get the page
     const songname = pages2Index(page);
@@ -821,16 +997,15 @@ addBookmarkMenuOverlay.addEventListener("click", (e) => {
   }
   
   // clicking outside popup also closes
-  if (e.target === addBookmarkMenuOverlay) {
-    addBookmarkMenuOverlay.style.display = "none";
-  }
+  //if (e.target === addBookmarkMenuOverlay) {
+  //  addBookmarkMenuOverlay.style.display = "none";
+  //}
 });
     
 
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
 // Bookmark List stuff
-let currentBookmarkFolder = "Folder 1";
 
 // Disable system context menu (Download/Share) on bookmark folder tabs
 document.addEventListener('contextmenu', function(e) {
@@ -859,7 +1034,7 @@ document.querySelectorAll('.tab-btn').forEach(button => {
   const endPress = (e) => {
     clearTimeout(longpressTimer);
     if (!isLongPress) {
-      // --- CLICK FOLDER TAB ---
+      // --- SHORT PRESS FOLDER TAB ---
       const folderId = parseInt(button.getAttribute('bookmarkFolder'));
       selectFolder(folderId);
     }
@@ -881,12 +1056,18 @@ document.querySelectorAll('.tab-btn').forEach(button => {
 });
 
 // This function runs when you long-press a folder tab
+// This deletes all the items in the selected folder
+// --- LONG PRESS FOLDER TAB ---
 function handleFolderLongPress(folderId) {
-  //const folderName = "Folder " + folderId;
+  if (folderId === 4) {
+    showToast("無法刪除“我的歌曲”中的所有項目。"); // Cannot delete all items in My Songs
+    return; // can't delete My Songs folder
+  }
+  
   if (currentBookmarkFolder === "Folder " + folderId) {
     const bookmarks = JSON.parse(localStorage.getItem(APP_NAME+"_bookmarks") || "{}");
     
-    // SAFETY CHECK: Ensure the folder exists in the object and has items
+    // Ensure the folder exists in the object and has items
     if (bookmarks[currentBookmarkFolder] && bookmarks[currentBookmarkFolder].length > 0) {
       
       const toast = document.getElementById('confirm-toast');
@@ -902,17 +1083,22 @@ function handleFolderLongPress(folderId) {
         localStorage.setItem(APP_NAME+"_bookmarks", JSON.stringify(currentBookmarks)); // save back to localStorage
         createBookmarkList(); 
         toast.classList.remove('show');
-        showToast("資料夾"+folderId+"已清理");  // Folder 1 cleared 資料夾 1 已清理
+        //showToast("資料夾"+folderId+"已清理");  // Folder 1 cleared 資料夾 1 已清理
       };
 
       document.getElementById('confirmCancelBtn').onclick = () => { // Cancel clear button clicked
         toast.classList.remove('show');
       };
+
+    } else {
+      showToast("没有可清除的项目"); // No items to clear
     }
+    
   }
 }
 
 // This function runs when you press a folder tab
+// --- SHORT PRESS FOLDER TAB ---
 function selectFolder(folderId) {
   const tabs = document.querySelectorAll('.tab-btn');
   tabs.forEach((tab, index) => {
@@ -929,7 +1115,7 @@ function selectFolder(folderId) {
 
 
 ///// Bookmark List - 
-///// Part A: Structure the List
+///// Part A: Create the List
 function createBookmarkList() {
   // retrieve bookmark folder items from local storage
   const bookmarks = JSON.parse(localStorage.getItem(APP_NAME+"_bookmarks") || "{}");
@@ -940,7 +1126,7 @@ function createBookmarkList() {
   // check for bookmark list empty
   if (currentBookmarkFolderItems.length === 0) {
     if (currentBookmarkFolder == "Folder 4") {
-      bookmarkList.innerHTML = `<div style="padding: 20px; text-align: center; color: #888;">我的歌曲功能即將上線</div>`; // My Songs feature coming soon
+      bookmarkList.innerHTML = `<div style="padding: 20px; text-align: center; color: #888;">选择“导入我的歌曲”以导入歌曲</div>`; // Select Import My Songs to import a song
     } else {
       bookmarkList.innerHTML = `<div style="padding: 20px; text-align: center; color: #888;">長按歌曲或索引即可加書籤</div>`; // Long press song or index to add bookmark
     }
@@ -960,22 +1146,38 @@ function createBookmarkList() {
   //  </div>
   //  </li>
 
-  currentBookmarkFolderItems.forEach((songname, folderIndex) => {
+  currentBookmarkFolderItems.forEach((songTitle, folderIndex) => {
     const li = document.createElement('li');
     li.className = 'swipe-item';
-    li.dataset.name = songname;
+    li.dataset.name = songTitle;
     li.dataset.index = folderIndex;
 
+    if (currentBookmarkFolder === "Folder 4") { // layout with Edit icon for Folder 4 My Songs
+      li.innerHTML = `
+        <div class="swipe-background">
+          <img src="icons/ic_trash.png" alt="Trash">
+        </div>
+        <div class="swipe-content">
+          <span class="bookmark-text">${songTitle}</span>
+          <div class="icon-group">
+            <img class="edit-icon" src="icons/ic_edit.png" alt="Edit">
+            <img class="drag-handle" src="icons/ic_drag.png" alt="Drag" draggable="false">
+          </div>
+        </div>
+      `;
+      
+    } else {  // layout WITHOUT Edit icon for Folders 1, 2 or 3
     li.innerHTML = `
       <div class="swipe-background">
         <img src="icons/ic_trash.png" alt="Trash">
       </div>
       <div class="swipe-content">
-        <span class="bookmark-text">${songname}</span>
+        <span class="bookmark-text">${songTitle}</span>
         <img class="drag-handle" src="icons/ic_drag.png" alt="Drag" draggable="false">
       </div>
     `;
-
+    }
+    
     bookmarkList.appendChild(li);
   });
 }
@@ -1045,8 +1247,6 @@ function getClientY(e) {
 
 // onSwipeStart
 function onSwipeStart(e, songname) {
-  // if (!e.target.closest('.swipe-item')) return;  // might need this for the single-click to work.
-
   swipeContent = swipeItem?.querySelector('.swipe-content');
   swipeStartX = getClientX(e);
   swipeStartY = getClientY(e);
@@ -1058,7 +1258,7 @@ function onSwipeStart(e, songname) {
   
   // check for long press of item
   longpressTimeout = setTimeout(() => {
-    // --- LONG PRESS ADD BOOKMARK LOGIC ---
+    // --- LONG PRESS BOOKMARK LIST ---
     longPressed = true;
     addBookmarkMenuOverlay.dataset.songname = songname; // pass songname to the addBookmarkMenuOverlay.addEventListener
     addBookmarkMenuOverlay.style.display = "flex";  // show Add Bookmark Menu popup window
@@ -1111,6 +1311,7 @@ function onSwipeEnd(e) {
 
   content.style.transition = 'transform 0.2s ease-out';
 
+  // check for swipe distance
   if (isHorizontal && diffX < -swipeThreshold) {
     // Only delete if it was a horizontal swipe and greater than the threshold
     content.style.transform = 'translateX(-100%)';
@@ -1125,8 +1326,10 @@ function onSwipeEnd(e) {
         if (ev2.propertyName !== 'height') return;
         item.removeEventListener('transitionend', onCollapse);
         
-        // delete item from local storage
+        // Delete item from local storage
         const bookmarks = JSON.parse(localStorage.getItem(APP_NAME+"_bookmarks") || "{}");
+        const mySongs = JSON.parse(localStorage.getItem(APP_NAME+"_MySongs") || '{}');      // get My Songs
+
         const folderItems = bookmarks[currentBookmarkFolder] || [];
         // Find the index of the item to remove
         // We use the dataset index we set in createBookmarkList
@@ -1138,17 +1341,59 @@ function onSwipeEnd(e) {
           localStorage.setItem(APP_NAME+"_bookmarks", JSON.stringify(bookmarks)); // Save back
         }            
          
-        // save the deleted item for undo
+        // Update Swiper and slide to the next available song
+        if (folderItems.length > 0) {
+            // If we deleted the last song, indexToRemove is now out of bounds.
+            // We adjust it to point to the new last song.
+            let nextIndex = indexToRemove;
+            if (nextIndex >= folderItems.length) {
+                nextIndex = folderItems.length - 1;
+            }
+            // update currentListPages
+            const newPageIndex = updateCurrentListPages(nextIndex, folderItems);
+            // update swiper and slide to it in the background
+            syncSwiper();
+            swiper.slideTo(newPageIndex, 0);
+            
+        } else {
+            // if the folder is now empty, then just clear the swiper
+            currentListPages = [];
+        }
+         
+        // Save the deleted item for undo
         lastDeletedItem = {
           item: item,
           parent: item.parentNode,
           nextSibling: item.nextSibling,
           name: songNameToRemove,
-          index: indexToRemove
+          index: indexToRemove,
+          mysong: mySongs[songNameToRemove]  // save My Song
         };
         
         item.remove();      // remove item from DOM
         createBookmarkList(); // recreate the bookmark list
+        
+        // Remove My Song from local storage
+        if (currentBookmarkFolder === "Folder 4") {
+          // 1. Delete the actual image data
+          delete mySongs[songNameToRemove];
+          // 2. Look through ALL bookmark folders (Folder 1, 2, 3, etc.) to delete mysong from other bookmark folders
+          Object.keys(bookmarks).forEach(folderName => {
+            // We only need to check OTHER folders (Folder 4 is already handled)
+            if (folderName !== "Folder 4") {
+              //const originalLength = bookmarks[folderName].length;
+              
+              // Filter out the song name if it exists in this folder
+              bookmarks[folderName] = bookmarks[folderName].filter(name => name !== songNameToRemove);
+            }
+          });
+        }
+
+        // Save updated bookmarks
+        localStorage.setItem(APP_NAME+"_bookmarks", JSON.stringify(bookmarks)); // Save back
+        // save updated My Songs
+        localStorage.setItem(APP_NAME+"_MySongs", JSON.stringify(mySongs));       
+
         showUndoToast(); // show toast for undo
       });
     }, { once: true });
@@ -1162,6 +1407,7 @@ function onSwipeEnd(e) {
       e.preventDefault();   // 🚫 block the synthetic click
       e.stopPropagation();  // 🚫 block bubbling
       if (!shortPressHandled) {
+        // --- SHORT PRESS BOOKMARK LIST ---
         // item click detected. Display songsheet
         shortPressHandled = true;
         // 1. Retrieve the parameters from the item's dataset
@@ -1190,48 +1436,16 @@ function onSwipeEnd(e) {
 } // end onSwipeEnd
 
 
-///// Update swiper with bookmark list pages and display the songsheet when a bookmark item is clicked
+/////////////////////////////////////////////////////////////////////////
+///// Display the songsheet when a bookmark item is clicked
+///// Updates the currentListPages global variable
+// --- SHORT PRESS BOOKMARK LIST ---
 function handleBookmarkSelect(songname, songindex, folderItems) {
   stopAudio();
   bookmarkListContainer.style.display = 'none';
-
-  // --- Create the swiper pages for the bookmark folder items
-  const folderListPages = [];
-  let pageIndex = -1;
-  folderItems.forEach((item, index) => {
-    // Extract number at the beginning for Numeric List "468 A Child of the King"
-    const match = item.match(/^(\d+)/);
-    
-    if (match) {
-      const songNumber = match[1];
-      const targetPrefix = songNumber + 'h';  // append "h" for filename
-      
-      // Search NUMERIC_PAGES for multi pages belonging to this song
-      // This regex matches "262h", "262h2", "262h3", etc.
-      const regex = new RegExp('^' + targetPrefix + '\\d*$');
-      let songPages = NUMERIC_PAGES.filter(p => regex.test(p));
-      
-      // remove duplicates e.g. His Eye Is On the Sparrow occurs twice in the NUMERIC_PAGES list
-      songPages = [...new Set(songPages)];
-
-      // set the actual pageIndex of the selected page in folderListPages
-      // this is needed if a song occurs more than once in the bookmark list
-      // and the second occurence of the song is selected
-      if (index == songindex) {
-        pageIndex = folderListPages.length;
-      }
-      
-      // Add all the multi pages for the song to our new swiper list
-      folderListPages.push(...songPages);
-      
-    } else {
-      console.warn("handleBookmarkSelect:Regex match failed for bookmark item:", item);
-      folderListPages.push(item);
-    }
-  });
-  
-  // --- Display the selected song
-  currentListPages = folderListPages;
+  // update the currentListPages and get the pageIndex of song to display
+  const pageIndex = updateCurrentListPages(songindex, folderItems);
+  // display the song
   displaySong(songname, pageIndex);
 }
 
@@ -1432,7 +1646,18 @@ bookmarkList.addEventListener('touchstart', (e) => {
   bookmarkListStartY = e.touches[0].clientY;
   isBookmarkListScrolling = false;
   
-  // check for drag on handle
+  // 1. Check for press on Edit Pencil Icon
+  const editBtn = e.target.closest('.edit-icon');
+  if (editBtn) {
+    //e.preventDefault();
+    e.stopPropagation();
+    //if (document.activeElement) document.activeElement.blur();  // force any existing focus to drop to prevent soft keyboard popup
+    const songName = e.target.closest('.swipe-item').dataset.name;
+    editExistingMySong(songName);
+    return; // Exit early so swipe/drag don't start
+  }
+  
+  // 2. Check for drag on Drag Handle icon
   dragItem = e.target.closest('.drag-handle');
   if (dragItem) {
     if (e.cancelable) e.preventDefault();   // block scroll right away
@@ -1446,7 +1671,7 @@ bookmarkList.addEventListener('touchstart', (e) => {
     return;
   }
   
-  // check for swipe on item
+  // 3. Check for swipe on item
   swipeItem = e.target.closest('.swipe-item');  // this will setup the swipe for the <li> item
   if (swipeItem) {
     const songname = swipeItem.dataset.name;  // get the songname from the list dataset
@@ -1499,7 +1724,16 @@ bookmarkList.addEventListener('touchcancel', () => {
 // Bookmark List - Mouse event listeners
 // Mouse down event
 bookmarkList.addEventListener('mousedown', (e) => {
-  // 1. Check for drag on handle
+  // 1. Check for click on Edit Pencil Icon
+  const editBtn = e.target.closest('.edit-icon');
+  if (editBtn) {
+    e.stopPropagation();
+    const songName = e.target.closest('.swipe-item').dataset.name;
+    editExistingMySong(songName);
+    return; 
+  }
+  
+  // 2. Check for drag on Drag Handle icon
   dragItem = e.target.closest('.drag-handle');
   if (dragItem) {
     e.preventDefault(); 
@@ -1513,7 +1747,7 @@ bookmarkList.addEventListener('mousedown', (e) => {
     return;
   }
 
-  // 2. Check for swipe on item (Desktop swipe simulation)
+  // 3. Check for swipe on item (Desktop swipe simulation)
   swipeItem = e.target.closest('.swipe-item');
   if (swipeItem) {
     const songname = swipeItem.dataset.name;  // get the songname from the list dataset
@@ -1575,7 +1809,7 @@ function showUndoToast() {
 
 // Restore item when UNDO button is clicked
 document.getElementById('undoBtn').addEventListener('click', (e) => {
-  // 1. IMPORTANT: Prevent this click from bubbling up to lists behind the toast
+  // 1. Prevent this click from bubbling up to lists behind the toast
   e.stopPropagation();
 
   if (lastDeletedItem) {
@@ -1589,14 +1823,23 @@ document.getElementById('undoBtn').addEventListener('click', (e) => {
     bookmarks[currentBookmarkFolder] = folderItems;
     localStorage.setItem(APP_NAME+"_bookmarks", JSON.stringify(bookmarks));
 
-    // 3. Refresh the UI from the fresh data
+    // 3. Save My Song to local storage
+    try {
+      const mySongs = JSON.parse(localStorage.getItem(APP_NAME+"_MySongs") || '{}');
+      mySongs[lastDeletedItem.name] = lastDeletedItem.mysong;
+      localStorage.setItem(APP_NAME+"_MySongs", JSON.stringify(mySongs));
+    } catch (error) {
+      console.log("Error removing my songs from local storage");
+    }
+
+    // 4. Refresh the UI from the fresh data
     // This is safer than manual DOM insertion as it resets all data-index values correctly
     createBookmarkList();
 
     lastDeletedItem = null;
   }
 
-  // 4. Hide Toast immediately
+  // 5. Hide Toast immediately
   clearTimeout(toastTimeout);
   document.getElementById('undo-toast').classList.remove('show');
 });
@@ -1711,159 +1954,6 @@ if (window.visualViewport) {
 
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
-// Music Player stuff
-const audio = document.getElementById("audio");
-const playBtn = document.getElementById("btnPlay");
-const pauseBtn = document.getElementById("btnPause");
-const stopBtn = document.getElementById("btnStop");
-const progressBar = document.getElementById("progressBar");
-const elapsedTime = document.getElementById("elapsed");
-const remainingTime = document.getElementById("remaining");
-const audioFilenameDiv = document.getElementById("audioFilename");
-
-let audiofileAvailable = false;
-let playing = false;
-
-// Format time from seconds to MM:SS
-function formatTime(seconds) {
-  seconds = Math.floor(seconds);
-  let m = Math.floor(seconds / 60);
-  let s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-// Update time display and progress bar
-function updateTimeDisplay() {
-  if (audio.duration) {
-    elapsedTime.textContent = formatTime(audio.currentTime);
-    remainingTime.textContent = formatTime(audio.duration - audio.currentTime);
-    progressBar.max = audio.duration;
-    progressBar.value = audio.currentTime;
-  } else {
-    elapsedTime.textContent = "0:00";
-    remainingTime.textContent = "0:00";
-    progressBar.max = 100;
-    progressBar.value = 0;
-  }
-}
-
-// Display the Music Player popup
-function openMusicPlayer() {
-  document.getElementById('musicPlayerOverlay').classList.add('show');
-  
-  // get filename
-  let filename = currentListPages[swiper.activeIndex];
-  // remove the page number from the end of the name, e.g. the 2 from Serenade - Liszt2
-  filename = filename.replace(/(2|3|4)$/, '');
-  
-  if (!playing) {
-    audio.src = "audios/"+filename+".mp3"; // Set the audio source when popup opens
-    audio.load(); // Ensure the audio is ready for playback
-
-    // Disable the controls initially
-    playBtn.disabled = true;
-    pauseBtn.disabled = true;
-    stopBtn.disabled = true;
-    progressBar.disabled = true;
-    
-    // Check if the file exists (after loading data)
-    audio.onloadeddata = () => {
-      const songname = pages2Index(filename);   // convert *_PAGES format "468h" to NUMERIC_INDEX format "468 A Child of the King"
-      audioFilenameDiv.textContent = songname;  // Display the song name
-      updateTimeDisplay();  // Show the initial time remaining
-      playBtn.disabled = false;
-    };
-
-    // If the file can't be loaded, show error
-    audio.onerror = () => {
-      audioFilenameDiv.textContent = "沒有音訊檔案";  // No audio file
-    };
-
-  }
-}
-
-
-function closeMusicPlayer() {
-  document.getElementById('musicPlayerOverlay').classList.remove('show');
-}
-
-// Detect Esc key to close the Music Player popup
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeMusicPlayer();
-});
-
-function playAudio() {
-  audio.play();
-  playBtn.disabled = true;
-  pauseBtn.disabled = false;
-  stopBtn.disabled = false;
-  progressBar.disabled = false;
-  playing = true;
-}
-
-function pauseAudio() {
-  audio.pause();
-  playBtn.disabled = false;
-  pauseBtn.disabled = true;
-}
-
-function stopAudio() {
-  audio.pause();
-  audio.currentTime = 0;
-  playBtn.disabled = false;
-  pauseBtn.disabled = true;
-  stopBtn.disabled = true;
-  progressBar.disabled = true;
-  updateTimeDisplay();
-  playing = false;
-}
-/*
-audio.addEventListener("loadeddata", () => {
-  audiofileAvailable = true;
-});
-
-audio.addEventListener("loadedmetadata", () => {
-  if (musicPlayerIsOpen && audiofileAvailable) {
-    updateTimeDisplay();
-  }
-});
-
-audio.addEventListener("error", () => {
-  console.warn("Audio file not found or cannot be loaded.");
-  audiofileAvailable = false;
-});
-*/
-
-
-audio.addEventListener("timeupdate", () => {
-  updateTimeDisplay();
-});
-
-progressBar.addEventListener("input", () => {
-  audio.currentTime = progressBar.value;
-});
-
-// triggers when song has ended
-audio.addEventListener("ended", () => {
-  stopAudio();
-});
-
-
-//////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////
-// Toast message at bottom stuff
-function showToast(message) {
-  const toast = document.getElementById("toast");
-  toast.textContent = message;
-  toast.className = "show";
-  setTimeout(() => {
-    toast.className = toast.className.replace("show", "");
-  }, 3000); // hide after 3s
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////
 // Regular expression. Regex:
 //    ^     beginning of string
 //    $     end of string
@@ -1891,6 +1981,8 @@ function pages2Index(page) {
 //////////////////////////////////////////////////////////////////////////////////
 //// Helper function to convert the name string to "310 A Child of the King AH468"
 //// from either "A Child of the King 310 AH468" or "310 A Child of the King AH468"
+/*
+// original
 function formatName(name) {
   // 1. Find the first occurrence of digits
   const match = name.match(/\d+/);
@@ -1913,11 +2005,43 @@ function formatName(name) {
   // 5. Construct final format: Number + Space + Combined Text
   return `${songNumber} ${combinedText}`;
 }
+*/
 
+//// Helper function to convert name format
+// name format can be
+//   5 赞美真神 or 赞美真神 5
+//   "12 Joyful, Joyful, We Adore Thee",      (number at beginning)
+//   "12 Joyful, Joyful, We Adore Thee2",     (number at beginning with page number at end)
+//   "Joyful, Joyful, We Adore Thee 12"       (number at end with a space)  i.e., song number
+//   or "Pass It On2"                         (number at end with NO space) i.e., page number
+// change it to 
+//   "12 Joyful, Joyful, We Adore Thee",      (number at beginning and no page number)
+//// 5 赞美真神
+function formatName(name) {
+  let formattedName;
+  // is there a song number at the beginning (digits) (space) (everything else)?
+  if (name.match(/^(\d+)\s(.*)$/)) {  // yes there is a number at the beginning
+    // remove the page number at the end if there is one (everything else)(no space)(digits)
+    formattedName = name.replace(/\d+$/, ''); // remove the page number at the end
+  } else {  // no number at the beginning
+    if (!/ \d+$/.test(name) && /\d+$/.test(name)) { // is there a page number?
+    // This block runs ONLY if there are digits at the end 
+    // AND there is NOT a space before them.
+      // remove the page number at the end if there is one (everything else)(no space)(digits)
+      formattedName = name.replace(/\d+$/, ''); // remove the page number at the end
+    } else {  // there's a song number at the end
+      // move the song number at the end to the beginning
+      // from (name) (space) (digits) to (digits) (space) (name)
+      let match = name.match(/^(.*)\s(\d+)$/);
+      formattedName = match ? `${match[2]} ${match[1]}` : name;
+    }
+  }
+  return formattedName;
+}
 
 //////////////////////////////////////////////////////////////////////////////////
 //// Helper function to attach the touch and mouse event handlers for given song
-// Called by NUMERIC_INDEX.forEach and ALPHABETIC_INDEX.forEach, and renderSearchList
+// Called by NUMERIC_INDEX.forEach, ALPHABETIC_INDEX.forEach, STROKE_INDEX.forEach, and renderSearchList
 function attachListItemEventHandler(item, songname) {
   // --- touch and mouse event handlers ---
   let longpressTimer = null;
@@ -1937,7 +2061,7 @@ function attachListItemEventHandler(item, songname) {
     e.stopPropagation();
 
     longpressTimer = setTimeout(() => {
-      // --- LONG PRESS ADD BOOKMARK LOGIC ---
+      // --- LONG PRESS INDEX LIST ---
       isLongPress = true;
       addBookmarkMenuOverlay.dataset.songname = songname; // pass songname to the addBookmarkMenuOverlay.addEventListener
       addBookmarkMenuOverlay.style.display = "flex";  // show Add Bookmark Menu popup window
@@ -1948,7 +2072,7 @@ function attachListItemEventHandler(item, songname) {
   const endPress = (e) => {
     clearTimeout(longpressTimer);
     if (!isLongPress && !isScrolling) {
-      // --- CLICK DISPLAY SONG LOGIC ---
+      // --- SHORT PRESS INDEX LIST ---
       stopAudio();
       closeSearch();
       numericList.style.display = 'none';
@@ -2003,24 +2127,619 @@ function attachListItemEventHandler(item, songname) {
   item.addEventListener('mouseleave', cancelPress);  
 }
 
-       
+   
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+// Music Player stuff
+const audio = document.getElementById("audio");
+const playBtn = document.getElementById("btnPlay");
+const pauseBtn = document.getElementById("btnPause");
+const stopBtn = document.getElementById("btnStop");
+const progressBar = document.getElementById("progressBar");
+const elapsedTime = document.getElementById("elapsed");
+const remainingTime = document.getElementById("remaining");
+const audioFilenameDiv = document.getElementById("audioFilename");
+
+let playing = false;
+
+// Format time from seconds to MM:SS
+function formatTime(seconds) {
+  seconds = Math.floor(seconds);
+  let m = Math.floor(seconds / 60);
+  let s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+// Update time display and progress bar
+function updateTimeDisplay() {
+  if (audio.duration) {
+    elapsedTime.textContent = formatTime(audio.currentTime);
+    remainingTime.textContent = formatTime(audio.duration - audio.currentTime);
+    progressBar.max = audio.duration;
+    progressBar.value = audio.currentTime;
+  } else {
+    elapsedTime.textContent = "0:00";
+    remainingTime.textContent = "0:00";
+    progressBar.max = 100;
+    progressBar.value = 0;
+  }
+}
+
+// Display the Music Player popup
+function openMusicPlayer() {
+  document.getElementById('musicPlayerOverlay').classList.add('show');
+  
+  // get filename
+  let filename = currentListPages[swiper.activeIndex];
+  // remove the page number from the end of the name, e.g. the 2 from Serenade - Liszt2
+  filename = filename.replace(/\d+$/, ''); // remove the page number at the end
+  
+  if (!playing) {
+    audio.src = "audios/"+filename+".mp3"; // Set the audio source when popup opens
+    audio.load(); // Ensure the audio is ready for playback
+
+    // Disable the controls initially
+    playBtn.disabled = true;
+    pauseBtn.disabled = true;
+    stopBtn.disabled = true;
+    progressBar.disabled = true;
+    audioFilename.textContent = "Loading...";
+    
+    // Check if the file exists (after loading data)
+    audio.onloadeddata = () => {
+      const songname = pages2Index(filename);   // convert *_PAGES format "468h" to NUMERIC_INDEX format "468 A Child of the King"
+      audioFilenameDiv.textContent = songname;  // Display the song name
+      updateTimeDisplay();  // Show the initial time remaining
+      playBtn.disabled = false;
+    };
+
+    // If the file can't be loaded, show error
+    audio.onerror = () => {
+      audioFilenameDiv.textContent = "沒有音訊檔案";  // No audio file
+    };
+
+  }
+}
+
+
+function closeMusicPlayer() {
+  document.getElementById('musicPlayerOverlay').classList.remove('show');
+}
+
+// Detect Esc key to close the Music Player popup
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeMusicPlayer();
+});
+
+function playAudio() {
+  audio.play();
+  playBtn.disabled = true;
+  pauseBtn.disabled = false;
+  stopBtn.disabled = false;
+  progressBar.disabled = false;
+  playing = true;
+}
+
+function pauseAudio() {
+  audio.pause();
+  playBtn.disabled = false;
+  pauseBtn.disabled = true;
+}
+
+function stopAudio() {
+  audio.pause();
+  audio.currentTime = 0;
+  const audioFilename = document.getElementById("audioFilename");
+  if (audioFilename.textContent === "沒有音訊檔案") {  // No audio file
+    playBtn.disabled = true;
+  } else {
+    playBtn.disabled = false;
+  }
+  pauseBtn.disabled = true;
+  stopBtn.disabled = true;
+  progressBar.disabled = true;
+  updateTimeDisplay();
+  playing = false;
+}
+/*
+audio.addEventListener("loadeddata", () => {
+});
+
+audio.addEventListener("loadedmetadata", () => {
+  updateTimeDisplay();
+});
+
+audio.addEventListener("error", () => {
+  console.warn("Audio file not found or cannot be loaded.");
+});
+*/
+
+
+audio.addEventListener("timeupdate", () => {
+  updateTimeDisplay();
+});
+
+progressBar.addEventListener("input", () => {
+  audio.currentTime = progressBar.value;
+});
+
+// triggers when song has ended
+audio.addEventListener("ended", () => {
+  stopAudio();
+});
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+// Import My Songs stuff
+
+//////////////////////////////////////////////////////////////////////////////////
+// Show the Import My Songs popup
+function openImportMySongs() {
+  document.getElementById('importMySongsOverlay').classList.add('show');  // open the popup
+  //const inputFileName = document.getElementById('inputFileName');
+  //inputFileName.value = '';
+  //inputFileName.blur();     // force the browser to drop any focus
+  //inputFileName.focus();    // set focus to the input field
+  const fileRadio = document.querySelector('input[name="importSource"][value="file"]');
+  fileRadio.checked = true;
+  
+  // execution continues with the goImportMySongs()
+}
+
+// this is called when a radio button is pressed
+function handleImportMySongsRadioButtonChange(radio) {
+  const selectedSource = radio.value; // This will be 'file' or 'camera'
+  //const inputFileName = document.getElementById('inputFileName');
+  if (selectedSource === 'file') {
+    //inputFileName.placeholder = "Enter file name (optional)";
+    // You could show a "Choose File" button here if needed
+  } else if (selectedSource === 'camera') {
+    //inputFileName.placeholder = "Enter file name (required)";
+    // You could prepare the camera stream here
+  }
+}
+
+// This is called when the CANCEL button in Import My Songs is pressed
+// Close the Import My Songs popup
+function closeImportMySongs() {
+  document.getElementById('importMySongsOverlay').classList.remove('show');
+}
+
+// This is called when the GO button in Import My Songs is pressed
+function goImportMySongs() {
+  // this is the hidden input field hiddenFileInput for triggering the file picker or camera
+  const fileInput = document.getElementById('hiddenFileInput');
+  const importSource = document.querySelector('input[name="importSource"]:checked').value;
+
+  if (importSource === 'file') {
+    // open the file picker
+    fileInput.removeAttribute('capture');
+    fileInput.setAttribute('accept', '.jpg, .jpeg, .png'); // Set your allowed types
+
+  } else {
+    // open the camera
+    fileInput.setAttribute('accept', 'image/*');
+    fileInput.setAttribute('capture', 'environment'); // rear camera. Use capture="user" for front camera 
+  }
+  
+  // Programmatically click the hidden input hiddenFileInput to open the file picker
+  fileInput.click();
+  
+  // execution continues with the handleFileSelect()
+}
+
+
+// This runs after the user selects one or more files from the file picker or takes a photo
+// It is called from html input for id="hiddenFileInput" onchange="handleFileSelect"
+async function handleFileSelect(input) {
+  if (input.files && input.files.length > 0) {  // check if there's actually a file selected
+    closeImportMySongs(); // Close popup after selection
+
+    // show the spinner
+    const preview = document.getElementById('imagePreview');
+    const spinner = document.getElementById('loadingSpinner');
+    preview.style.display = 'none';
+    spinner.style.display = 'block';
+
+    // user selected just one or multiple files?
+    if (input.files.length > 1) {
+      // MULTIPLE FILES BATCH MODE: Save directly
+      /*
+      // show the spinner
+      // 1. Show the Edit overlay (where the spinner lives)
+      document.getElementById('editMySongsOverlay').classList.add('show');
+      
+      // 2. Hide the file input/fields and show only the spinner
+      document.getElementById('imagePreview').style.display = 'none';
+      document.getElementById('inputFileName').parentElement.style.display = 'none'; // Hide "File name:" text
+      const spinner = document.getElementById('loadingSpinner');
+      spinner.style.display = 'block';
+
+      // 3. Use setTimeout to allow the UI to actually render the spinner
+      // before the heavy "saveFilesDirectly" loop starts.
+      setTimeout(async () => {
+        await saveMultipleFiles(input.files);
+        
+        // 4. Clean up: Restore the Edit popup's original state for next time
+        document.getElementById('inputFileName').parentElement.style.display = 'block';
+      }, 100);
+      */
+      
+      // close the popup
+      closeEditMySongs();
+      selectFolder(4);
+
+      showToast(`正在導入${input.files.length}首歌曲...`);  // Importing n songs...
+      await saveMultipleFiles(input.files);
+      
+      // execution continues with the saveMultipleFiles()
+      
+    } else {
+      // SINGLE FILE MODE: Show Edit My Songs Popup
+      // show the spinner
+      const preview = document.getElementById('imagePreview');
+      const spinner = document.getElementById('loadingSpinner');
+      preview.style.display = 'none';
+      spinner.style.display = 'block';
+      
+      //setTimeout(() => {  // a slight delay before opening popup to prevent browser flickers
+          openEditMySongs(input);
+          
+          // execution continues with the openEditMySongs()
+      //}, 50);
+    }
+  }
+  
+  // IMPORTANT. Need to reset the input value to clear the browser cache
+  // otherwise handleFileSelect doesn't get called if the same file(s) are selected immediately the second time
+  input.value = "";
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////
+// Show the Edit My Songs popup
+let originalEditName = ""; // Tracks the name before any user edits for renaming
+
+// this function is called from handleFileSelect, AFTER user selects a file or takes a photo
+function openEditMySongs(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const name = file.name.replace(/\.[^/.]+$/, "");
+    const sizeText = file.size > 1048576 
+        ? (file.size / 1048576).toFixed(2) + " MB" 
+        : (file.size / 1024).toFixed(1) + " KB";
+
+    const reader = new FileReader();
+    reader.onload = (e) => populateEditMySongs(name, e.target.result, sizeText);
+    reader.readAsDataURL(file);
+    
+    // execution continues with the populateEditMySongs()
+  }
+}
+
+// this function is called when the Edit pencil icon is clicked
+function editExistingMySong(songName) {
+  const mySongs = JSON.parse(localStorage.getItem(APP_NAME + "_MySongs") || '{}');
+  const songData = mySongs[songName];
+  if (!songData) return;
+
+  // Calculate size from Base64 string
+  const stringLength = songData.split(',')[1].length;
+  const sizeInKb = (Math.floor(stringLength * 0.75) / 1024).toFixed(1);
+
+  populateEditMySongs(songName, songData, sizeInKb + " KB");
+
+  // execution continues with the populateEditMySongs()
+}
+
+// fills in the data in the Edit My Songs popup
+function populateEditMySongs(name, imageData, sizeText) {
+    originalEditName = name;  // store the name to check for renames later
+
+    // 1. Set text fields
+    const inputFileName = document.getElementById('inputFileName');
+    inputFileName.value = name;
+    document.getElementById('displayFileSize').innerText = sizeText;
+
+    // 2. Update the page number field from the input name
+    updatePageNumberFromInput(name);
+    
+    // 3. Set Image
+    const preview = document.getElementById('imagePreview');
+    preview.src = imageData;
+    preview.style.display = 'block';
+    preview.style.transition = 'none';      // Disable animation
+    preview.style.transform = 'rotate(0deg)'; // Reset rotation
+    currentImageRotation = 0;
+
+    // Force a reflow to ensure the 'none' takes effect before we re-enable transitions
+    void preview.offsetWidth; 
+    preview.style.transition = 'transform 0.2s ease-in-out'; // Re-enable rotate animation for the rotate icons. NEED to match the style in CSS
+    //transition: transform 0.2s ease-in-out, width 0.2s, height 0.2s;  /* this makes the rotation smooth taking 0.2 seconds */
+    
+    // 4. turn off spinner
+    const spinner = document.getElementById('loadingSpinner');
+    spinner.style.display = 'none';
+
+    // 5. Show Popup and Focus
+    document.getElementById('editMySongsOverlay').classList.add('show');
+    //inputFileName.focus();  // show soft keyboard
+    //inputFileName.select();
+}
+
+// this is called from populateEditMySongs AND html
+function updatePageNumberFromInput(name) {
+  const pageDisplay = document.getElementById('displayPageNumber');
+  // Finds digits at the end of the string
+  const match = name.match(/(\d+)$/);  
+  // Update the page number
+  pageDisplay.innerText = match ? match[1] : "1";
+  
+}
+
+// This is called when the DONE button in Edit My Songs popup is pressed
+function doneEditMySongs() {
+  const filename = document.getElementById('inputFileName').value.trim().replace(/\s+(?=\d+$)/, '');
+  const imageElement = document.getElementById('imagePreview');
+
+  if (!filename || !imageElement.src) return;
+
+  const compressedData = compressImage(imageElement); 
+  
+  try {
+    // 1. Check if filename already exists in My Songs
+    const mySongs = JSON.parse(localStorage.getItem(APP_NAME + "_MySongs") || '{}');
+    if (mySongs[filename] && filename !== originalEditName) {
+      showToast("名称已存在。请选择其他名称。");  // Name already exists. Please choose a different name
+      return; // Don't save
+    }
+    
+    // 2. Update My Songs bookmark
+    const bookmarks = JSON.parse(localStorage.getItem(APP_NAME + "_bookmarks") || "{}");
+
+    // 3. Is it a Rename?
+    if (originalEditName && originalEditName !== filename) {
+      // Remove old image data
+      delete mySongs[originalEditName];
+      
+      //  Loop through EVERY folder in bookmarks (Folder 1, 2, 3, 4, etc.)
+      Object.keys(bookmarks).forEach(folderKey => {
+        let currentFolder = bookmarks[folderKey];
+        // Find the index of the old name in this specific folder
+        const oldIndex = currentFolder.indexOf(originalEditName);
+        if (oldIndex !== -1) {
+          // Replace the old name with the new name at the exact same position
+          currentFolder[oldIndex] = filename;
+        }
+      });
+
+    }
+
+    // 4. Add the new filename to folder4
+    if (!bookmarks["Folder 4"]) { // if Folder 4 doesn't exist, create it as an empty array
+      bookmarks["Folder 4"] = [];
+    }
+    if (!bookmarks["Folder 4"].includes(filename)) {
+      bookmarks["Folder 4"].push(filename);
+    }
+
+    // 5. Save updated folder4 bookmarks
+    localStorage.setItem(APP_NAME + "_bookmarks", JSON.stringify(bookmarks));
+
+    // 6. Save the compressed new image data
+    mySongs[filename] = compressedData;
+    localStorage.setItem(APP_NAME + "_MySongs", JSON.stringify(mySongs));
+      
+  } catch (error) {
+    console.warn("storage is full ",error);
+    showToast("存储空间已满"); // Storage is full
+    return; 
+  }
+
+  closeEditMySongs();
+  
+  // Re-fetch to ensure we have the latest state for the UI update
+  const updatedBookmarks = JSON.parse(localStorage.getItem(APP_NAME + "_bookmarks") || "{}");
+  const folderItems = updatedBookmarks["Folder 4"] || [];
+
+  if (folderItems.length > 0) {
+    // Find the correct index of the song we just saved
+    const currentSongIndex = folderItems.indexOf(filename); 
+    const finalIndex = currentSongIndex !== -1 ? currentSongIndex : folderItems.length - 1;
+    // Rebuild swiper and show the song
+    handleBookmarkSelect(filename, finalIndex, folderItems);
+    selectFolder(4);
+  }
+} // end doneEditMySongs
+
+
+// This is called when the CANCEL button in Edit My Songs is pressed
+// Close the Edit My Songs popup
+function closeEditMySongs() {
+  document.getElementById('editMySongsOverlay').classList.remove('show');
+}
+
+// this is called when user selects multiple files to save all of them to local storage
+async function saveMultipleFiles(files) {
+  let mySongs = JSON.parse(localStorage.getItem(APP_NAME + "_MySongs") || '{}');
+  const fileArray = Array.from(files);
+//  const spinnerPara = document.querySelector('#loadingSpinner p'); // The "Processing..." text
+  
+  for (const file of fileArray) {
+//  for (let i = 0; i < fileArray.length; i++) {
+//    const file = fileArray[i];
+//    if (spinnerPara) {  // show and update spinner text
+//      spinnerPara.innerText = `Processing Page ${i + 1} of ${fileArray.length}...`;
+//    }
+    const originalName = file.name.replace(/\.[^/.]+$/, "");
+    try {
+      const img = await fileToImage(file);  // Load file into a temporary Image object (not the DOM)
+      const compressedData = compressImage(img);  // Compress the image
+      mySongs[originalName] = compressedData;     // Store the image
+      saveBookmark(originalName, "Folder 4");     // add to bookmark list
+      
+    } catch (err) {
+      console.error("Failed to import:", file.name, err);
+    }
+  }
+
+  try {
+    // save My Songs to local storage
+    localStorage.setItem(APP_NAME + "_MySongs", JSON.stringify(mySongs));
+    // sync the swiper with the updated My Songs (Folder 4)
+    const bookmarks = JSON.parse(localStorage.getItem(APP_NAME + "_bookmarks") || "{}");
+    const folderItems = bookmarks["Folder 4"] || [];
+    
+    if (folderItems.length > 0) {
+      const lastIndex = folderItems.length - 1; // point to the very last song added
+      //const lastSongName = folderItems[lastIndex];
+      updateCurrentListPages(lastIndex, folderItems);  // update the global currentListPages
+      // update swiper and slide to it in the background
+      syncSwiper();
+      swiper.slideTo(lastIndex, 0);
+    }        
+    showToast(`${fileArray.length} 歌曲已导入“我的歌曲”`);  // songs imported to My Songs
+  } catch (e) {
+    showToast("存储空间已满"); // Storage is full
+  }
+}
+
+
+// Converts a File object (from input.files) into an HTMLImageElement
+// This is required so the Canvas can "draw" the image for compression
+// This is called from saveMultipleFiles()
+function fileToImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => resolve(img); // Image is loaded and ready for canvas
+      img.onerror = reject;           // Handle broken or invalid images
+      img.src = e.target.result;      // This is the base64 dataURL
+    };
+    
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Rotate the image by the given degrees
+let currentImageRotation = 0;
+
+// this is called from html
+function rotateImage(degrees) {
+  currentImageRotation = (currentImageRotation + degrees) % 360;
+  
+  const img = document.getElementById('imagePreview');
+  const container = img.parentElement; // Assumes a container div holds the image
+  
+  img.style.transform = `rotate(${currentImageRotation}deg)`;
+
+  // If rotation is 90 or 270, the image is "sideways"
+  if (Math.abs(currentImageRotation) % 180 !== 0) {
+    // For vertical orientation, we need to ensure the image 
+    // fits by swapping how we treat the container's space
+    img.style.maxWidth = 'none'; 
+    // You might need to adjust the container height here 
+    // depending on your CSS layout
+  } else {
+    img.style.maxWidth = '100%';
+  }
+}
+
+// this is called from html
+async function resizeImage() {
+    const imgElement = document.getElementById('imagePreview');
+    const sizeDisplay = document.getElementById('displayFileSize');
+
+    // 1. Compress image using the currentImageRotation and MAX_WIDTH (800px)
+    const compressedData = compressImage(imgElement);
+
+    // 2. Update the preview with the new, smaller version
+    imgElement.src = compressedData;
+
+    // 3. Calculate the new size to show the user the result
+    // (Base64 strings are ~33% larger than binary, so we multiply by 0.75 for accuracy)
+    const stringLength = compressedData.split(',')[1].length;
+    const sizeInBytes = Math.floor(stringLength * 0.75);
+    const sizeInKb = (sizeInBytes / 1024).toFixed(1);
+
+    sizeDisplay.innerText = sizeInKb + " KB";
+}
+
+// Compress the image
+function compressImage(imgElement) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  // Detect if we are sideways
+  const isSideways = Math.abs(currentImageRotation) % 180 !== 0;
+  
+  // SWAP dimensions for the canvas if sideways
+  const width = isSideways ? imgElement.naturalHeight : imgElement.naturalWidth;
+  const height = isSideways ? imgElement.naturalWidth : imgElement.naturalHeight;
+  
+  // Set canvas size to the NEW dimensions
+  canvas.width = width;
+  canvas.height = height;
+
+  // Move registration point to the center to rotate
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate((currentImageRotation * Math.PI) / 180);
+  
+  // Draw the image (using natural dimensions)
+  ctx.drawImage(imgElement, -imgElement.naturalWidth / 2, -imgElement.naturalHeight / 2);
+
+  return canvas.toDataURL('image/jpeg', 0.7);
+}
+
+// Handle the Go/Enter key press on the soft keyboard
+// will call the doneEditMySongs
+function handleEditKeydown(event) {
+  // Check for the "Go/Enter" key (key code 13 or key "Enter")
+  if (event.key === "Enter" || event.keyCode === 13) {    
+    event.preventDefault(); // Prevent the default behavior (like refreshing the page or moving to next field)
+    doneEditMySongs();    // Trigger the same logic as the DONE button
+    event.target.blur();  // Force the keyboard to close
+  }
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+// Toast message at bottom stuff
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.className = "show";
+  setTimeout(() => {
+    toast.className = toast.className.replace("show", "");
+  }, 2500); // hide after 2.5s
+}
+
+    
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
 // Wake Lock to prevent device from going to sleep
 let wakeLock = null;
 
 const requestWakeLock = async () => {
-  try {
-    // Request a screen wake lock
-    wakeLock = await navigator.wakeLock.request('screen');
-    
-    // Listen for the release event
-    wakeLock.addEventListener('release', () => {
-      console.log('Wake Lock was released');
-    });
-    console.log('Wake Lock is active');
-  } catch (err) {
-    console.error(`${err.name}, ${err.message}`);
+  if ('wakeLock' in navigator) {  // Check if the browser supports the API
+    try {
+      // Request a screen wake lock
+      wakeLock = await navigator.wakeLock.request('screen');
+      
+      // Listen for the release event
+      wakeLock.addEventListener('release', () => {
+        console.log('Wake Lock was released');
+      });
+    } catch (err) {
+      console.error(`${err.name}, ${err.message}`);
+    }
+  } else {
+    console.warn("Wake Lock API not supported in this browser.");
   }
 };
 
@@ -2029,13 +2748,21 @@ const requestWakeLock = async () => {
 //////////////////////////////////////////////////////////////////////////////////
 // Service Worker stuff
 // This is the UI to notify user of new updates
+let updateAlert = false;
 function revealUpdateMenuItem() {
   const updateItem = document.getElementById('updateMenuItem');
   if (updateItem) {
     updateItem.style.display = 'flex'; // Use flex to match your other items
+    updateAlert = true;
     console.log("SW 4:Notify user of new updates");
+    
+    // Show update alert
+    setTimeout(() => {
+      showToast("有新更新可用"); // New updates available
+    }, 500); // 500ms is usually enough to clear background throttling
   }
 }
+
 
 let newWorker;
 
@@ -2082,7 +2809,7 @@ async function registerServiceWorker() {
     } // end if ('serviceWorker' in navigator)
 }
 
-registerServiceWorker();  // start the Service Worker
+//registerServiceWorker();  // start the Service Worker
 
 // Check for service worker updates every so often
 setInterval(() => {
@@ -2092,5 +2819,6 @@ setInterval(() => {
       reg.update();  // step 1
     }
   });
-//}, 6 * 60 * 60 * 1000); // 6 * 60 * 60 * 1000 every 6 hours
-}, 15 * 1000); // every 15 seconds
+//}, 24 * 60 * 60 * 1000); // every 24 hours
+//}, 1 * 60 * 60 * 1000);  // every 1 hour
+}, 15 * 1000);           // every 15 seconds

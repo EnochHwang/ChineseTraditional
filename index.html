@@ -29,7 +29,7 @@
         <button class="menuButtons" onclick="onMenuPress('search')"><img src="icons/ic_search.png" width="30" height="30" alt="搜索"></button>
         <button class="menuButtons" onclick="onMenuPress('numeric')"><img src="icons/ic_number.png"  width="36" height="36" alt="数字列表"></button>
         <button class="menuButtons" onclick="onMenuPress('stroke')"><img src="icons/ic_stroke.png" width="36" height="36" alt="字母顺序列表??"></button>
-        <button class="menuButtons" onclick="onMenuPress('alphabetic')"><img src="icons/ic_title.png" width="36" height="36" alt="字母顺序列表??"></button>
+<!--        <button class="menuButtons" onclick="onMenuPress('alphabetic')"><img src="icons/ic_title.png" width="36" height="36" alt="字母顺序列表??"></button>-->
         <button class="menuButtons" onclick="onMenuPress('bookmark')"><img src="icons/ic_bookmark.png" width="36" height="36" alt="书签列表"></button>
         
         <button class="menuButtons" onclick="onMenuPress('play')"><img src="icons/ic_play.png" width="36" height="36" alt="音乐播放器"></button>
@@ -47,6 +47,67 @@
     </div>
   </nav>
 
+  
+  <!------------------------------------------------------------------------------->
+  <!-- More (three dots) Popup Menu -->
+  <div id="moreMenuOverlay" class="moreMenuOverlay" onclick="closeMoreMenu()">
+    <div id="moreMenuContent" class="moreMenuContent" onclick="event.stopPropagation()">
+        <div class="more-item" onclick="handleMoreAction('alphabetic')">
+          <img src="icons/ic_title.png" width="36" height="36" alt="字母顺序列表??">
+        </div>
+
+        <div class="more-item" onclick="handleMoreAction('import')">
+            <svg viewBox="0 0 24 24">
+              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+            </svg>
+            <span>導入我的歌曲</span> <!-- Import My Song -->
+        </div>
+        
+        <div class="more-item" onclick="handleMoreAction('share')">
+            <svg viewBox="0 0 24 24">
+              <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+            </svg>
+            <span>分享</span>       <!-- Share -->
+        </div>
+        
+        <div id="updateMenuItem" class="more-item" onclick="handleMoreAction('updates')" style="display: none;">
+            <svg viewBox="0 0 24 24">
+                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+            <span style="font-weight: bold;">安裝更新</span>  <!-- Install Updates -->
+        </div>
+        
+        <div class="more-item" onclick="handleMoreAction('moreapps')">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+            </svg>
+            <span>更多應用</span>
+        </div>
+<!-- Settings        
+        <div class="more-item" onclick="handleMoreAction('settings')">
+            <svg viewBox="0 0 24 24">
+              <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+            </svg>
+            <span>設定</span>
+        </div>
+-->
+        <div class="more-item" onclick="handleMoreAction('donate')">
+            <svg viewBox="0 0 24 24">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            <span>捐</span> <!-- Donate -->
+        </div>
+
+        <div class="more-item" onclick="handleMoreAction('help')">
+            <svg viewBox="0 0 24 24">
+              <path d="M11.07 12.85c.77-1.39 2.25-2.21 3.11-3.44.91-1.29.4-3.7-2.18-3.7-1.69 0-2.52 1.28-2.87 2.34L6.54 6.96C7.25 4.83 9.18 3 11.99 3c2.35 0 3.96 1.07 4.78 2.41.7 1.15.7 3 .1 4.27-.76 1.59-2.39 2.12-3.05 3.28-.12.23-.15.48-.15.7h-2.6c0-.31.03-.59.1-.81zM11 18c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5z"/>
+            </svg>
+            <span>輔助說明</span>   <!-- Help -->
+        </div>
+    </div>
+  </div>
+
+  
   <!------------------------------------------------------------------------------->
   <!-- Songsheets -->
   <div class="songsheet-container">
@@ -67,7 +128,7 @@
     </div> <!-- swiper -->
     
     <!------------------------------------------------------------------------------->
-    <!-- Alphabetic, Numeric and Bookmark lists -->
+    <!-- Alphabetic, Numeric, Stroke and Bookmark lists -->
     <div id="numericList" style="display: none;">
       <!-- CreateNumericList() will populate this list -->
     </div>
@@ -118,10 +179,7 @@
   <!-- Music Player Popup Window -->
   <div id="musicPlayerOverlay" class="musicPlayerOverlay" onclick="closeMusicPlayer()">
     <div id="musicPlayerControls" class="musicPlayerControls" onclick="event.stopPropagation()"> <b>
-      <center>
-        音樂播放器   <!-- Music Player -->
-      </center>
-      </b> 
+      <div class="popup-title">音樂播放器</div>  <!-- Music Player -->
       
       <!-- Audio --> 
       <!--<audio id="audio" src="Serenade - Liszt.mp3"></audio>-->
@@ -176,55 +234,84 @@
       <button id="confirmYesBtn" style="color: #ff5252;">清除</button> <!-- Clear -->
     </div>
   </div>
-
   
-  <!------------------------------------------------------------------------------->
-  <!-- More (three dots) Popup Menu -->
-  <div id="moreMenuOverlay" class="moreMenuOverlay" onclick="closeMoreMenu()">
-    <div id="moreMenuContent" class="moreMenuContent" onclick="event.stopPropagation()">
-        <div class="more-item" onclick="handleMoreAction('import')">
-            <svg viewBox="0 0 24 24">
-              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-            </svg>
-            <span>導入我的歌曲</span> <!-- Import My Song -->
-        </div>
-        
-        <div class="more-item" onclick="handleMoreAction('share')">
-            <svg viewBox="0 0 24 24">
-              <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
-            </svg>
-            <span>分享</span>       <!-- Share -->
-        </div>
-        
-        <div id="updateMenuItem" class="more-item" onclick="handleMoreAction('updates')" style="display: none;">
-            <svg viewBox="0 0 24 24">
-                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-            </svg>
-            <span style="font-weight: bold;">安裝更新</span>  <!-- Install Updates -->
-        </div>
-        
-        <div class="more-item" onclick="handleMoreAction('moreapps')">
-            <svg viewBox="0 0 24 24">
-              <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
-            </svg>
-            <span>更多應用</span>
-        </div>
-        
-        <div class="more-item" onclick="handleMoreAction('settings')">
-            <svg viewBox="0 0 24 24">
-              <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
-            </svg>
-            <span>設定</span>       <!-- Settings -->
-        </div>
-        
-        <div class="more-item" onclick="handleMoreAction('help')">
-            <svg viewBox="0 0 24 24">
-              <path d="M11.07 12.85c.77-1.39 2.25-2.21 3.11-3.44.91-1.29.4-3.7-2.18-3.7-1.69 0-2.52 1.28-2.87 2.34L6.54 6.96C7.25 4.83 9.18 3 11.99 3c2.35 0 3.96 1.07 4.78 2.41.7 1.15.7 3 .1 4.27-.76 1.59-2.39 2.12-3.05 3.28-.12.23-.15.48-.15.7h-2.6c0-.31.03-.59.1-.81zM11 18c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5z"/>
-            </svg>
-            <span>輔助說明</span>   <!-- Help -->
-        </div>
+
+  <!-------------------------------------------------------------------------------> 
+  <!-- Import My Songs popup -->
+  <div id="importMySongsOverlay" class="importMySongsOverlay">
+    <div class="importMySongsControls" onclick="event.stopPropagation()">
+      <div class="popup-title">导入我的歌曲</div>  <!-- Import My Songs -->
+
+      <!-- this is the hidden input field for triggering the file picker or camera -->
+      <input type="file" id="hiddenFileInput" style="display: none;" onchange="handleFileSelect(this)" multiple>
+      <!--
+      <input type="text" id="inputFileName" placeholder="Enter file name (optional)" value="" autocomplete="off">
+      -->
+      <div class="importMySongsRadioButtons">
+        <span>从哪里导入:</span>  <!-- Import from: -->
+        <label><input type="radio" name="importSource" value="file" onchange="handleImportMySongsRadioButtonChange(this)" checked> 文件</label>  <!-- FILE -->
+        <label><input type="radio" name="importSource" value="camera" onchange="handleImportMySongsRadioButtonChange(this)"> 相机</label> <!-- CAMERA -->
+      </div>
+      
+      <div class="popup-buttons">
+        <button onclick="closeImportMySongs()">取消</button> <!-- CANCEL -->
+        <button onclick="goImportMySongs()">去</button>      <!-- GO -->
+      </div>
     </div>
   </div>
+
+
+  <!-------------------------------------------------------------------------------> 
+  <!-- Edit My Songs popup -->
+  <div id="editMySongsOverlay" class="editMySongsOverlay">
+    <div class="editMySongsControls" onclick="event.stopPropagation()">
+      <div class="popup-title">编辑我的歌曲</div>  <!-- Edit My Songs -->
+
+      <!-- image preview -->
+      <!--<img id="imagePreview" style="display: none; width: 100%; max-height: 150px; object-fit: contain; margin-bottom: 15px; border-radius: 4px;">-->
+      <img id="imagePreview">
+
+      <!-- spinner -->
+      <div id="loadingSpinner" style="display: none; text-align: center; margin: 20px 0;">
+        <div class="spinner"></div>
+        <p style="color: #0033ff; font-size: 14px; margin-top: 10px;">Processing Pages...</p>
+      </div>
+      
+      <div style="margin-top: 30px;">文件名:</div> <!-- File name -->
+      <input type="text" id="inputFileName" value="" placeholder="Format: <name><page number> - name2" autocomplete="off" onkeydown="handleEditKeydown(event)" oninput="updatePageNumberFromInput(this.value)">
+      
+      <div class="info-row">
+        <span>页码: <span id="displayPageNumber">1</span></span> <!-- Page number -->
+        <span style="margin-left: 50px;">文件大小: <span id="displayFileSize">--</span></span> <!-- File size -->
+      </div>
+      
+      <div class="edit-actions">
+        旋转: <!-- Rotate -->
+        <button type="button" onclick="rotateImage(-90)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38"/></svg>
+        </button>
+
+        <button type="button" onclick="rotateImage(90)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg>
+        </button>
+        
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Resize:
+        <button type="button" onclick="resizeImage()">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="cursor:pointer; vertical-align: middle;">
+            <path d="M21,15h1.2v2h-1.2v-2z M21,11h1.2v2h-1.2v-2z M22.2,19h-1.2v1.2c0.6,0 1.2,-0.6 1.2,-1.2z M13,3h2v1.2h-2L13,3z M21,7h1.2v2h-1.2L21,7z M21,3v1.2h1.2c0,-0.6 -0.6,-1.2 -1.2,-1.2z M1,7h1.2v2L1,9L1,7z M17,3h2v1.2h-2L17,3z M17,21h2v-1.2h-2v1.2z M2.2,3C1.6,3 1,3.6 1,4.2h1.2L2.2,3z M9,3h2v1.2L9,4.2L9,3z M5,3h2v1.2L5,4.2L5,3z" />
+            <path d="M1,11v9c0,0.6 0.4,1 1,1h12v-10L1,11z M2.2,19.8l2.8,-3.6 1.8,2.2 2.8,-3.6 3.6,5L2.2,19.8z" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="popup-buttons">
+        <button onclick="closeEditMySongs()">取消</button> <!-- CANCEL -->
+        <button id="doneEditMySongs" onclick="doneEditMySongs()">完毕</button> <!-- DONE -->
+      </div>
+            
+    </div>
+  </div>
+
 
   <!------------------------------------------------------------------------------->
   <!-- this is for the PWA-Builder popup menu to install the app -->

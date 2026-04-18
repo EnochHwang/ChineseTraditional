@@ -69,6 +69,54 @@ body {
   transition: all 0.3s ease;
 }
 
+
+/*******************************************************************/
+/*  More (three dots) Popup Menu */
+.moreMenuOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2000; /* Above searchList and sidebars */
+    background: transparent; /* Invisible backdrop to catch clicks for closing */
+}
+
+.moreMenuContent {
+    position: absolute;
+    right: 10px; /* Aligned to the right edge */
+    top: 60px;   /* Directly below the menu bar */
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    width: 170px;
+    overflow: hidden;
+}
+
+.more-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: none; /* 1px solid #eee; */
+}
+
+.more-item svg {
+  fill: #0033ff; /* This will make the gear, share, etc., match your menu bar */
+  /* Control the actual size of the SVG paths */
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0; /* Ensure they don't grow to fill the container */
+  opacity: 0.8;
+}
+
+.more-item span {
+  font-size: 16px;
+  color: black;
+  white-space: nowrap; /* Prevent text from wrapping weirdly */
+}
+
+
 /*******************************************************************/
 /* Songsheet */
 .songsheet-container {
@@ -95,6 +143,7 @@ body {
   overflow: hidden;
   background: #fff;
 }
+
 .swiper-zoom-container > img {
   width: 100%;
   height: 100%; /* this will align vertically to the top. If it is auto then it will be centered */
@@ -151,13 +200,13 @@ body {
   
 }
 
+
 /*******************************************************************/
 /*  Numeric, Alphabetic, Stroke and Search lists */
 #numericList, #alphabeticList, #strokeList {
   position: absolute;
   top: 0;
   left: 0;
-  /* right: 26px;      /* Leaves room for the sidebar */
   right: 30px;      /* Leaves room for the sidebar */
   bottom: 0;        /* Ensures the list stretches to the bottom of the container */
   width: auto;      /* Changed from calc(100% - 30px) for better stability */
@@ -214,6 +263,7 @@ body {
   background-color: #f0f0f0;
 }
 
+
 /*******************************************************************/
 /*  Fast Scroll List Sidebar */
 .fast-scroll-sidebar {
@@ -244,13 +294,14 @@ body {
 	font-weight: bold;
 	cursor: pointer;
 }
+
 .fast-scroll-bubble {
 	position: absolute; /* Relative to .songsheet-container */
   top: 0;
 	right: 50px; /* To the left of the sidebar */
 	width: 60px;
 	height: 60px;
-	background-color: rgba(37, 99, 235, 0.9); /* Blue */
+	background-color: rgba(00, 51, 255, 0.9); /* Blue */
 	color: white;
 	border-radius: 50%; /* Circle */
 	display: flex;
@@ -265,9 +316,11 @@ body {
 	opacity: 0;
 	transition: opacity 0.2s;
 }
+
 .fast-scroll-bubble.show {
 	opacity: 1;
 }
+
 
 /*******************************************************************/
 /*  Add Bookmark Popup Window stuff */
@@ -282,6 +335,7 @@ body {
   pointer-events: auto;
   user-select: none; /* disable text selection inside popup */
 }
+
 .addBookmarkControls {
   background: white;
   border-radius: 10px;
@@ -295,6 +349,7 @@ body {
   margin: 0 0 10px;
   font-size: 18px;
 }
+
 .addBookmarkControls p {
   margin: 0 0 15px;
   font-size: 14px;
@@ -310,12 +365,15 @@ body {
   border: none;
   border-radius: 6px;
   background: #f0f0f0;
+  color: #0033ff;
+  font-weight: bold;
   cursor: pointer;
 }
 
 .addBookmarkControls button:hover {
   background: #ddd;
 }
+
 
 /*******************************************************************/
 /* Bookmark List Container & Tabs */
@@ -372,6 +430,7 @@ body {
   box-sizing: border-box;
 }
 
+
 /*******************************************************************/
 /* Bookmark List Swipe-to-delete and Drag-to-move styles */
 .swipe-item {
@@ -425,12 +484,26 @@ body {
   background-color: #f0f0f0;
 }
 
+.icon-group {
+  display: flex;
+  align-items: center;
+  /* This controls the gap specifically between the edit Pencil and the Drag Handle */
+  gap: 16px; 
+}
+
 .drag-handle {
   width: 30px;
   height: 30px;
   opacity: 0.4;
   cursor: grab;
   touch-action: none;
+}
+
+.edit-icon {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .drag-handle:active {
@@ -452,9 +525,9 @@ body {
 
 
 /*******************************************************************/
-/*  Music Player */
+/*  Music Player and Import My Songs */
 /*  Music Player overlay (dark transparent background) */
-.musicPlayerOverlay {
+.musicPlayerOverlay, .importMySongsOverlay, .editMySongsOverlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
@@ -466,11 +539,21 @@ body {
   pointer-events: none; /* No interaction until visible */
   transition: opacity 0.3s ease;
 }
-.musicPlayerOverlay.show {
+
+/* For Tablets and larger (screens taller than 800px) */
+@media (min-height: 800px) {
+.editMySongsOverlay {
+    align-items: flex-start;
+    padding-top: 10vh; /* Move it up only when there is plenty of room */
+  }
+}
+
+.musicPlayerOverlay.show, .importMySongsOverlay.show, .editMySongsOverlay.show {
   opacity: 1;
   pointer-events: auto;
 }
-.musicPlayerControls {
+
+.musicPlayerControls, .importMySongsControls, .editMySongsControls {
   background: white;
   padding: 20px;
   border: 1px solid #888;
@@ -479,21 +562,36 @@ body {
   transition: transform 0.3s ease;
   min-width: 300px;
   border-radius: 8px;
+  /* Disable the selection of text */
+  -webkit-user-select: none;  /* Safari */
+  -ms-user-select: none;      /* IE 10 and 11 */
+  user-select: none;          /* Standard syntax */
 }
+
+/* IMPORTANT: Re-enable selection for the input field so users can still type/edit */
+.musicPlayerControls input, .importMySongsControls input, .editMySongsControls input {
+  -webkit-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
 .musicPlayerOverlay.show .musicPlayerControls {
   transform: scale(1);
 }
+
 .musicPlayer-buttons {
   display: flex;
   justify-content: space-around;
   margin-top: 15px;
 }
+
 .musicPlayer-buttons button {
   background: none;
   border: none;
   cursor: pointer;
   padding: 5px;
 }
+
 .musicPlayer-buttons svg {
   width: 32px;
   height: 32px;
@@ -501,89 +599,67 @@ body {
   fill: #2563eb; /* main blue */
   transition: fill 0.2s ease;
 }
+
 .musicPlayer-buttons button:hover:not(:disabled) svg {
-  /* fill: #2563eb; grey */
   fill: #1e40af; /* darker blue on hover */
 }
+
 .musicPlayer-buttons button:disabled svg {
-  /*fill: #bbb; light grey */
   fill: #bbd7ff; /* very light blue */
   cursor: not-allowed;
 }
+
 .progress-container {
   margin-top: 15px;
 }
+
 .progress-time {
   display: flex;
   justify-content: space-between;
   font-size: 14px;
   margin-top: 4px;
 }
+
 input[type=range] {
   width: 100%;
 }
+
 .audio-filename {
-/*  font-weight: bold; */
   margin-top: 10px;
   text-align: center;
   min-height: 1.2em; /* Reserve space so layout doesn't jump */
   color: #222;
 }
 
+
 /*******************************************************************/
-/*  Toast message at bottom */
-#toast {
+/*  Swipe to Delete Undo toast, Bookmark Folder Delete toast, and Toast */
+#undo-toast, #confirm-toast, #toast {
   position: fixed;
   left: 50%;
   bottom: 24px;
   transform: translateX(-50%);
-  z-index: 1000;
-
-  width: 95%;            /* almost full width */
-  max-width: 500px;      /* optional limit on very wide screens */
-  padding: 12px 16px;
-  border-radius: 10px;
-
-  background-color: #333;
-  color: #fff;
-  text-align: center;
-  font-size: 14px;
-
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s, bottom 0.3s;
-}
-
-#toast.show {
-  visibility: visible;
-  opacity: 1;
-  bottom: 40px; /* lift up a little when showing */
-}
-
-/*******************************************************************/
-/*  Swipe to Delete Undo toast and Bookmark Folder Delete toast */
-#undo-toast, #confirm-toast {
-  position: fixed;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
-  z-index: 2000;         /* Increased to ensure it's above all lists */
-
-  width: 95%;
+  width: 85%;
   max-width: 500px;
-  min-height: 20px;      /* Ensure height for visibility */
   padding: 12px 16px;
   border-radius: 10px;
-
   background-color: #333;
   color: #fff;
-  display: flex;         /* Use flex for internal layout */
-  justify-content: space-between;
-  align-items: center;
+  z-index: 1000;         /* Increased to ensure it's above all lists */
 
+  display: flex;
+  align-items: center;
+  box-sizing: border-box; /* Ensures padding doesn't add to width/height */
+  height: 35px;         /* fixed height for all */
+  
+  font-size: 14px;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, bottom 0.3s ease, visibility 0.3s ease;
+}
+
+#undo-toast, #confirm-toast {
+  justify-content: space-between;
 }
 
 #undo-toast.show, #confirm-toast.show {
@@ -604,48 +680,125 @@ input[type=range] {
   padding: 8px 12px;   /* Added padding for a larger hit area */
 }
 
+
 /*******************************************************************/
-/*  More (three dots) Popup Menu */
-.moreMenuOverlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 2000; /* Above searchList and sidebars */
-    background: transparent; /* Invisible backdrop to catch clicks for closing */
+/*  Toast message at bottom */
+#toast {
+  justify-content: center; /* Centers the text horizontally in flex */
+  text-align: center;
 }
 
-.moreMenuContent {
-    position: absolute;
-    right: 10px; /* Aligned to the right edge */
-    top: 60px;   /* Directly below the menu bar */
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    width: 170px;
-    overflow: hidden;
+#toast.show {
+  visibility: visible;
+  opacity: 1;
+  bottom: 40px; /* lift up a little when showing */
 }
 
-.more-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    gap: 12px;
-    cursor: pointer;
-    transition: background 0.2s;
-    border-bottom: none; /* 1px solid #eee; */
+
+/*******************************************************************/
+/*  Import My Songs popup */
+/*******************************************************************/
+.popup-title {
+  display: block;
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: bold;
 }
 
-.more-item svg {
-  fill: #0033ff; /* This will make the gear, share, etc., match your menu bar */
-  /* Control the actual size of the SVG paths */
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0; /* Ensure they don't grow to fill the container */
-  opacity: 0.8;
-}
-
-.more-item span {
+#inputFileName {
+  width: 100%;
+  padding: 10px 5px;
   font-size: 16px;
-  color: black;
-  white-space: nowrap; /* Prevent text from wrapping weirdly */
+  box-sizing: border-box;
+  border: none;
+  border-bottom: 2px solid #0033ff;
+  outline: none;
+  background: transparent;
+  margin: 1px 0;
+}
+
+/* The Radio Button row */
+.importMySongsRadioButtons {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Radio Button Color */
+.importMySongsRadioButtons input[type="radio"] {
+  accent-color: #0033ff;
+}
+
+.popup-buttons {
+  display: flex;
+  gap: 60px;           /* Adjust this number to your liking */
+  margin-top: 20px;      /* Adjust this for vertical spacing */
+  justify-content: center;
+  width: 100%;
+}
+
+.popup-buttons button {
+  background: none;
+  border: none;
+  padding: 10px 30px; /* Top/Bottom (10px) and Left/Right (30px) */
+  color: #0033ff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+#imagePreview {
+  width: 100%;
+  height: 100%;
+  max-height: 200px;
+  margin: 10px 0;
+  transition: transform 0.2s ease-in-out, width 0.2s, height 0.2s;  /* this makes the rotation smooth taking 0.2 seconds */
+  object-fit: contain;  
+}
+
+.info-row {
+  display: flex;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+#displayPageNumber, #displayFileSize {
+  font-weight: bold;
+  color: #0033ff; /* Matches your theme blue */
+}
+
+/* This class will be toggled by rotateImage() in JS when rotated */
+.is-portrait__notused {
+  max-width: 150px !important; /* Limit width so it doesn't overlap text when standing up */
+}
+
+.edit-actions button svg {
+  vertical-align: middle;
+  pointer-events: none; /* Ensures the click registers on the button, not the path */
+}
+
+.edit-actions button {
+  color: #0033ff;
+  background: none;
+  border: none;
+  padding: 12px; /* Bigger tap target */
+  cursor: pointer;
+}
+
+.edit-actions button:hover {
+  opacity: 0.7;
+}
+
+/* loading spinner */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 51, 255, 0.1);
+  border-left-color: #0033ff; /* Your theme blue */
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 1s linear infinite;
 }
