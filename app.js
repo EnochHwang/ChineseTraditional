@@ -266,7 +266,7 @@ function onMenuPress(id) {
       moreMenuOverlay.style.display = 'none';
       break;
     }
-    
+/*    
     case 'alphabetic': { // alphabetic list
       currentListPages = ALPHABETIC_PAGES;
       if (alphabeticList.style.display === 'none') {  // is the list hidden?
@@ -286,7 +286,7 @@ function onMenuPress(id) {
       moreMenuOverlay.style.display = 'none';
       break;
     }
-    
+*/    
     case 'stroke': { // stroke list
       currentListPages = STROKE_PAGES;
       if (strokeList.style.display === 'none') {  // is the list hidden?
@@ -354,6 +354,26 @@ function handleMoreAction(action) {
   moreMenuOverlay.style.display = 'none';
     
   switch(action) {
+    case 'alphabetic': { // alphabetic list
+      currentListPages = ALPHABETIC_PAGES;
+      if (alphabeticList.style.display === 'none') {  // is the list hidden?
+        alphabeticList.style.display = 'block';
+        alphabeticListSidebar.style.display = 'flex';
+      } else {
+        alphabeticList.style.display = 'none';
+        alphabeticListSidebar.style.display = 'none';
+      }
+      // hide the other lists
+      numericList.style.display = 'none';
+      numericListSidebar.style.display = 'none';
+      strokeList.style.display = 'none';
+      strokeListSidebar.style.display = 'none';
+      bookmarkListContainer.style.display = 'none';
+      searchList.style.display = 'none';
+      moreMenuOverlay.style.display = 'none';
+      break;
+    }
+
     case 'import':
       openImportMySongs();
       break;
@@ -985,6 +1005,16 @@ addBookmarkMenuOverlay.addEventListener("click", (e) => {
 
     // songname format at this point can be either "12 Joyful, Joyful, We Adore Thee" or
     // "Joyful, Joyful, We Adore Thee 12"
+    
+    // songname format can be one of:
+    //   number name            9 我們來敬拜你
+    //   number name AHnumber   1 聖哉真神 AH73
+    //   name number            一輪明月 78
+    //   name number AHnumber   一切美物 69 AH93
+    //
+    // convert it to:
+    //   number name AHnumber   1 聖哉真神 AH73    
+    
     const formattedSongname = formatName(songname);  // Make songname format as "12 Joyful, Joyful, We Adore Thee"
 
     if (folder !== "Cancel") {
@@ -2017,6 +2047,10 @@ function formatName(name) {
 // change it to 
 //   "12 Joyful, Joyful, We Adore Thee",      (number at beginning and no page number)
 //// 5 赞美真神
+
+
+/*
+// original
 function formatName(name) {
   let formattedName;
   // is there a song number at the beginning (digits) (space) (everything else)?
@@ -2038,6 +2072,47 @@ function formatName(name) {
   }
   return formattedName;
 }
+*/
+
+// songname format can be one of:
+//   number name            9 我們來敬拜你
+//   number name AHnumber   1 聖哉真神 AH73
+//   name number            一輪明月 78
+//   name number AHnumber   一切美物 69 AH93
+//
+// convert it to:
+//   number name AHnumber   1 聖哉真神 AH73
+/*
+function formatName2(songname) {
+  // ^(?:(\d+)\s+)?     (Group 1) Optional. Looks for digits at the very start followed by space.
+  // (.+?)\s+           (Group 2) Looks for the name letters followed by space.
+  // (\d+)              (Group 3) Looks for the mandatory song number.
+  // (?:\s+(AH\d+))?$   (Group 4) Optional. Looks for the AHnumber if it exists at the end
+  const regex = /^(?:(\d+)\s+)?(.+?)\s+(\d+)(?:\s+(AH\d+))?$/;
+
+  return songname.replace(regex, (match, g1, g2, g3, g4) => {
+    // If g1 exists, format was: Number Name
+    // If g1 is null, format was: Name Number
+    const number = g1 || g3;
+    const name = g2.trim();
+    const ah = g4 ? ` ${g4}` : '';
+    
+    return `${number} ${name}${ah}`;
+  });
+}
+*/
+function formatName(songname) {
+  // 1. If it's "Name Number AH", move Number to front: "Number Name AH"
+  // ^(.+?)\s+        (Group 1) Look for Name followed by space
+  // (\d+)            (Group 2) Look for Number
+  // (\s+AH\d+)?$     (Group 3) Look for space followed by AHnumber
+  let formatted = songname.replace(/^(.+?)\s+(\d+)(\s+AH\d+)?$/, '$2 $1$3');
+  
+  // 2. If it was already "Number Name AH", it stays the same.
+  // 3. Finally, trim any lingering internal spaces.
+  return formatted.replace(/\s+/g, ' ').trim();
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////
 //// Helper function to attach the touch and mouse event handlers for given song
