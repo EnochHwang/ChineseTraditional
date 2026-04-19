@@ -480,13 +480,18 @@ function displaySong(songname) {
 function displaySong(songname, pageIndex) {
   // do the following only if not given the pageIndex from attachListItemEventHandler and renderSearchList
   if (pageIndex == -1) {
+    // songname formats
+    //   number name AHnumber     (from numeric index)
+    //   number name              (from numeric index)
+    //   name number AHnumber     (from stroke index)
+    //   name number              (from stroke index)
+    //   numbername number        (respononsive reading in both numeric and stroke index)
     let songNumber;
     let match = songname.match(/^\d+.+?\s(\d+)$/);  // responsive reading NumberName Number
     if (match) {
-      console.log(match[0], " ", match[1]);
       songNumber = match[1];
     } else {
-      match = songname.match(/^(\d+)/);  // extract the song number
+      match = songname.match(/(\d+)/);  // extract the song number
       songNumber = match[1];
     }
     let targetFilename = songNumber + 'h';   // create the target filename search string (e.g., "2h")
