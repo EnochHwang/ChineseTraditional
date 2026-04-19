@@ -480,9 +480,15 @@ function displaySong(songname) {
 function displaySong(songname, pageIndex) {
   // do the following only if not given the pageIndex from attachListItemEventHandler and renderSearchList
   if (pageIndex == -1) {
-    // use /(\d+)/	to extract the first sequence of digits starting from the left, so will do both of the above, i.e., number at beginning or middle or end
-    const match = songname.match(/\d+/);  // extract the song number
-    const songNumber = match[0];
+    let songNumber;
+    let match = songname.match(/^\d+.+?\s(\d+)$/);  // responsive reading NumberName Number
+    if (match) {
+      console.log(match[0], " ", match[1]);
+      songNumber = match[1];
+    } else {
+      match = songname.match(/^(\d+)/);  // extract the song number
+      songNumber = match[1];
+    }
     let targetFilename = songNumber + 'h';   // create the target filename search string (e.g., "2h")
     pageIndex = currentListPages.findIndex(name => name === targetFilename || name.startsWith(targetFilename));
 
