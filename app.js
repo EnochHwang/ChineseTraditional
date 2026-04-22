@@ -417,11 +417,10 @@ function handleMoreAction(action) {
       strokeList.style.display = 'none';
       strokeListSidebar.style.display = 'none';  
       bookmarkListContainer.style.display = 'none';
-      swiper.virtual.removeAllSlides();
-      swiper.virtual.slides = NUMERIC_PAGES;  // populate swiper with NUMERIC_PAGES (default)  
-      currentListPages = NUMERIC_PAGES;
-      swiper.virtual.update();    
-      swiper.slideTo(0, 0); // jump to page 0 About page
+      
+      currentListPages = HELP_PAGES;
+      syncSwiper();
+      swiper.slideTo(0, 0);
       break;
   }
 }
@@ -2810,6 +2809,7 @@ function showToast(message) {
 //////////////////////////////////////////////////////////////////////////////////
 // Wake Lock to prevent device from going to sleep
 let wakeLock = null;
+let wakeLockTimer = null; // Variable to store the timer
 
 const requestWakeLock = async () => {
   if ('wakeLock' in navigator) {  // Check if the browser supports the API
@@ -2817,16 +2817,33 @@ const requestWakeLock = async () => {
       // Request a screen wake lock
       wakeLock = await navigator.wakeLock.request('screen');
       
+//      resetWakeLockTimer(); // reset screen timeout timer
+      
       // Listen for the release event
       wakeLock.addEventListener('release', () => {
         console.log('Wake Lock was released');
       });
+      
     } catch (err) {
       console.error(`${err.name}, ${err.message}`);
     }
   } else {
     console.warn("Wake Lock API not supported in this browser.");
   }
+};
+
+// Set the timer for 30 minutes (30 * 60 * 1000 milliseconds)
+const resetWakeLockTimer = () => {
+  console.log('Reset Wake Lock timer');
+  clearTimeout(wakeLockTimer);
+  wakeLockTimer = setTimeout(() => {
+    if (wakeLock) { // release the screen timeout lock
+      wakeLock.release();
+      wakeLock = null;
+      clearTimeout(wakeLockTimer);
+      wakeLockTimer = null;      
+    }
+  }, 1800000);  // 30 minutes
 };
 
 

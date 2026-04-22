@@ -3660,3 +3660,14 @@ const ALPHABETIC_PAGES = [
   "383h"
 ];
 // end ALPHABETIC_PAGES
+
+
+/////////////////////////////////////////////////////////////////////
+// HELP_PAGES
+const HELP_PAGES = [
+  "help",
+  "help2",
+  "help3",
+  "help4"
+];
+// end HELP_PAGES
