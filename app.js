@@ -2912,7 +2912,7 @@ async function registerServiceWorker() {
     } // end if ('serviceWorker' in navigator)
 }
 
-//registerServiceWorker();  // start the Service Worker
+registerServiceWorker();  // start the Service Worker
 
 // Check for service worker updates every so often
 setInterval(() => {
@@ -2923,5 +2923,5 @@ setInterval(() => {
     }
   });
 //}, 24 * 60 * 60 * 1000); // every 24 hours
-//}, 1 * 60 * 60 * 1000);  // every 1 hour
-}, 15 * 1000);           // every 15 seconds
+}, 1 * 60 * 60 * 1000);  // every 1 hour
+//}, 15 * 1000);           // every 15 seconds
